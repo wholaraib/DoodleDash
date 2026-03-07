@@ -29,9 +29,10 @@ class _HomeScreenState extends State<HomeScreen> {
               child: Column(
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                  const Icon(
-                    Icons.draw_rounded,
-                    size: 80,
+                  Image.asset(
+                    'assets/images/icon.png',
+                    width: 100,
+                    height: 100,
                     color: Colors.white,
                   ),
                   const SizedBox(height: 16),
