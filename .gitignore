@@ -43,3 +43,20 @@ app.*.map.json
 /android/app/debug
 /android/app/profile
 /android/app/release
+/.txt
+
+# Environment variables
+server/.env
+
+# Node
+server/node_modules
+
+# Flutter
+client/build
+client/.dart_tool
+client/.packages
+client/.flutter-plugins
+client/.flutter-plugins-dependencies
+
+# Mac
+.DS_Store

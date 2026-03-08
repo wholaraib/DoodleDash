@@ -38,11 +38,16 @@ class _CreateRoomScreenState extends State<CreateRoomScreen> {
           borderRadius: BorderRadius.circular(12),
           borderSide: const BorderSide(color: Color(0xFF1565C0), width: 2),
         ),
-        contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
+        contentPadding: const EdgeInsets.symmetric(
+          horizontal: 16,
+          vertical: 16,
+        ),
         filled: true,
         fillColor: Colors.grey[100],
       ),
-      items: items.map((v) => DropdownMenuItem(value: v, child: Text(v))).toList(),
+      items: items
+          .map((v) => DropdownMenuItem(value: v, child: Text(v)))
+          .toList(),
     );
   }
 
@@ -100,7 +105,8 @@ class _CreateRoomScreenState extends State<CreateRoomScreen> {
                 label: 'Room size',
                 value: _selectedRoomSize,
                 items: ["2", "3", "4", "5", "6", "7", "8"],
-                onChanged: (value) => setState(() => _selectedRoomSize = value!),
+                onChanged: (value) =>
+                    setState(() => _selectedRoomSize = value!),
               ),
               const SizedBox(height: 32),
               SizedBox(
