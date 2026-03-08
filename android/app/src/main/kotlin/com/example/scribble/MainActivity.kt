@@ -1,4 +1,4 @@
-package com.example.scribble
+package com.example.doodledash
 
 import io.flutter.embedding.android.FlutterActivity
 

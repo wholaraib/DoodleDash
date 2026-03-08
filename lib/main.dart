@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:scribble/screens/home_screen.dart';
+import 'package:doodledash/screens/home_screen.dart';
 import './screens/paint_screen.dart';
 void main() {
   runApp(const MyApp());
@@ -16,7 +16,7 @@ class MyApp extends StatelessWidget {
       theme: ThemeData(
         colorScheme: ColorScheme.fromSeed(seedColor: Colors.blue),
       ),
-      home: const PaintScreen(),
+      home: const HomeScreen(),
     );
   }
 }

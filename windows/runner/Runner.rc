@@ -90,12 +90,12 @@ BEGIN
         BLOCK "040904e4"
         BEGIN
             VALUE "CompanyName", "com.example" "\0"
-            VALUE "FileDescription", "scribble" "\0"
+            VALUE "FileDescription", "doodledash" "\0"
             VALUE "FileVersion", VERSION_AS_STRING "\0"
-            VALUE "InternalName", "scribble" "\0"
+            VALUE "InternalName", "doodledash" "\0"
             VALUE "LegalCopyright", "Copyright (C) 2026 com.example. All rights reserved." "\0"
-            VALUE "OriginalFilename", "scribble.exe" "\0"
-            VALUE "ProductName", "scribble" "\0"
+            VALUE "OriginalFilename", "doodledash.exe" "\0"
+            VALUE "ProductName", "doodledash" "\0"
             VALUE "ProductVersion", VERSION_AS_STRING "\0"
         END
     END

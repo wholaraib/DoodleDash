@@ -1,6 +1,6 @@
 {
-    "name": "scribble",
-    "short_name": "scribble",
+    "name": "doodledash",
+    "short_name": "doodledash",
     "start_url": ".",
     "display": "standalone",
     "background_color": "#0175C2",
