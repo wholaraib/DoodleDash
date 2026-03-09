@@ -1,5 +1,7 @@
+import 'package:doodledash/models/room_data.dart';
 import 'package:flutter/material.dart';
 import '../widgets/custom_text_field.dart';
+import '../screens/paint_screen.dart';
 
 class CreateRoomScreen extends StatefulWidget {
   const CreateRoomScreen({super.key});
@@ -13,6 +15,28 @@ class _CreateRoomScreenState extends State<CreateRoomScreen> {
   final TextEditingController _roomNameController = TextEditingController();
   String _selectedRounds = "2";
   String _selectedRoomSize = "2";
+
+  void createRoom() {
+    if (_nameController.text.isEmpty || _roomNameController.text.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Please fill in all fields')),
+      );
+      return;
+    } else {
+      final data = RoomData(
+        playerName: _nameController.text,
+        roomName: _roomNameController.text,
+        rounds: int.parse(_selectedRounds),
+        roomSize: int.parse(_selectedRoomSize),
+      );
+      Navigator.of(context).push(
+        MaterialPageRoute(
+          builder: (context) =>
+              PaintScreen(roomData: data, screenType: ScreenType.create),
+        ),
+      );
+    }
+  }
 
   Widget _buildDropdown({
     required String label,
@@ -113,7 +137,7 @@ class _CreateRoomScreenState extends State<CreateRoomScreen> {
                 width: double.infinity,
                 height: 52,
                 child: ElevatedButton(
-                  onPressed: () {},
+                  onPressed: createRoom,
                   style: ElevatedButton.styleFrom(
                     backgroundColor: const Color(0xFF1565C0),
                     foregroundColor: Colors.white,
