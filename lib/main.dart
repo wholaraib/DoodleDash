@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:doodledash/screens/home_screen.dart';
-import './screens/paint_screen.dart';
 void main() {
   runApp(const MyApp());
 }

@@ -29,30 +29,38 @@ mongoose
 io.on("connection", (socket) => {
   console.log("A user connected: " + socket.id);
 
-  socket.on("create-game", async ({ playerName, roomName, rounds, roomSize }) => {
-    try {
-      const existingRoom = await Room.findOne({ roomName: roomName });
-      if (existingRoom) {
-        socket.emit("error", {
-          message: "Room name already exists. Please choose a different name.",
+  socket.on(
+    "create-game",
+    async ({ playerName, roomName, rounds, roomSize }) => {
+      try {
+        const existingRoom = await Room.findOne({ roomName: roomName });
+        if (existingRoom) {
+          socket.emit("error", {
+            message:
+              "Room name already exists. Please choose a different name.",
+          });
+          return;
+        }
+        let room = new Room();
+        const word = getRandomWord();
+        room.word = word;
+        room.roomName = roomName;
+        room.rounds = rounds;
+        room.roomSize = roomSize;
+        room.players.push({
+          name: playerName,
+          socketID: socket.id,
+          isHost: true,
         });
-        return;
+        await room.save();
+        socket.join(room.roomName);
+        io.to(room.roomName).emit("room-updated", room);
+      } catch (err) {
+        console.error("Error handling create-room event:", err);
       }
-      let room = new Room();
-      const word = getRandomWord();
-      room.word = word;
-      room.roomName = roomName;
-      room.rounds = rounds;
-      room.roomSize = roomSize;
-      room.players.push({ name: playerName, socketID: socket.id, isHost: true });
-      await room.save();
-      socket.join(room.roomName);
-      io.to(room.roomName).emit("room-updated", room);
-    } catch (err) {
-      console.error("Error handling create-room event:", err);
-    }
-    // Handle game creation logic here
-  });
+      // Handle game creation logic here
+    },
+  );
 
   socket.on("join-game", (data) => {
     console.log("Join game event received with data:", data);

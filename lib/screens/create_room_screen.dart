@@ -19,11 +19,15 @@ class _CreateRoomScreenState extends State<CreateRoomScreen> {
   void createRoom() {
     if (_nameController.text.isEmpty || _roomNameController.text.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Please fill in all fields')),
+        const SnackBar(
+          content: Center(
+            child: Text('Please enter both your name and a room name.'),
+          ),
+        ),
       );
       return;
     } else {
-      final data = RoomData(
+      final data = CreateRoomData(
         playerName: _nameController.text,
         roomName: _roomNameController.text,
         rounds: int.parse(_selectedRounds),
