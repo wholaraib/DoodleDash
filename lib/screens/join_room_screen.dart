@@ -31,10 +31,10 @@ class _JoinRoomScreenState extends State<JoinRoomScreen> {
       );
       // Navigate to the PaintScreen with the provided data
       Navigator.of(context).push(
-        MaterialPageRoute(builder:  (context) => PaintScreen(
-              roomData: data,
-              screenType: ScreenType.join,
-            )),
+        MaterialPageRoute(
+          builder: (context) =>
+              PaintScreen(roomData: data, screenType: ScreenType.join),
+        ),
       );
     }
   }

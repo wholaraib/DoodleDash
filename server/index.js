@@ -8,7 +8,7 @@ const PORT = process.env.PORT || 3000;
 const server = http.createServer(app);
 const mongoose = require("mongoose");
 const io = require("socket.io")(server);
-const Room = require("./models/Room.js");
+const RoomModel = require("./models/Room.js");
 const getRandomWord = require("./api/getRandomWord.js");
 
 // middleware
@@ -33,7 +33,7 @@ io.on("connection", (socket) => {
     "create-game",
     async ({ playerName, roomName, rounds, roomSize }) => {
       try {
-        const existingRoom = await Room.findOne({ roomName: roomName });
+        const existingRoom = await RoomModel.findOne({ roomName: roomName });
         if (existingRoom) {
           socket.emit("error", {
             message:
@@ -41,7 +41,7 @@ io.on("connection", (socket) => {
           });
           return;
         }
-        let room = new Room();
+        let room = new RoomModel();
         const word = getRandomWord();
         room.word = word;
         room.roomName = roomName;
@@ -62,9 +62,32 @@ io.on("connection", (socket) => {
     },
   );
 
-  socket.on("join-game", (data) => {
-    console.log("Join game event received with data:", data);
-    // Handle game joining logic here
+  socket.on("join-game", async ({ playerName, roomName }) => {
+    try {
+      const room = await RoomModel.findOne({ roomName: roomName });
+      if (!room) {
+        socket.emit("error", {
+          message: "Room not found. Please check the room name and try again.",
+        });
+        return;
+      }
+      if (room.players.length >= room.roomSize) {
+        socket.emit("error", {
+          message: "Room is full. Please try joining a different room.",
+        });
+        return;
+      }
+      room.players.push({
+        name: playerName,
+        socketID: socket.id,
+        isHost: false,
+      });
+      await room.save();
+      socket.join(room.roomName);
+      io.to(room.roomName).emit("room-updated", room);
+    } catch (err) {
+      console.error("Error handling join-game event:", err);
+    }
   });
 
   socket.on("disconnect", () => {
@@ -73,7 +96,7 @@ io.on("connection", (socket) => {
 });
 
 app.get("/", (req, res) => {
-  res.send("Hiii!");
+  res.send("Hello World!");
 });
 
 server.listen(PORT, "0.0.0.0", () => {

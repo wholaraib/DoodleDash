@@ -66,7 +66,15 @@ class _PaintScreenState extends State<PaintScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      body: Container()
+      appBar: AppBar(
+        leading: IconButton(
+          icon: const Icon(Icons.arrow_back_ios_new_rounded),
+          onPressed: () => Navigator.of(context).pop(),
+        ),
+      ),
+      body: Container(
+        
+      ),
     );
   }
 
