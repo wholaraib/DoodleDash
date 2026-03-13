@@ -53,8 +53,8 @@ io.on("connection", (socket) => {
           isHost: true,
         });
         await room.save();
-        socket.join(room.roomName);
-        io.to(room.roomName).emit("room-updated", room);
+        socket.join(roomName);
+        io.to(roomName).emit("room-updated", room);
       } catch (err) {
         console.error("Error handling create-room event:", err);
       }
@@ -64,27 +64,31 @@ io.on("connection", (socket) => {
 
   socket.on("join-game", async ({ playerName, roomName }) => {
     try {
-      const room = await RoomModel.findOne({ roomName: roomName });
+      let room = await RoomModel.findOne({ roomName: roomName });
       if (!room) {
         socket.emit("error", {
           message: "Room not found. Please check the room name and try again.",
         });
         return;
       }
-      if (room.players.length >= room.roomSize) {
+      if (room.isJoin === true) {
+        let player = {
+          name: playerName,
+          socketID: socket.id,
+        };
+        room.players.push(player);
+        socket.join(roomName);
+        if (room.players.length === room.roomSize) {
+          room.isJoin = false;
+        }
+        room.turn = room.players[room.turnIndex];
+        room = await room.save();
+        io.to(roomName).emit("room-updated", room);
+      } else {
         socket.emit("error", {
-          message: "Room is full. Please try joining a different room.",
+          message: "The room is full. You cannot join this room.",
         });
-        return;
       }
-      room.players.push({
-        name: playerName,
-        socketID: socket.id,
-        isHost: false,
-      });
-      await room.save();
-      socket.join(room.roomName);
-      io.to(room.roomName).emit("room-updated", room);
     } catch (err) {
       console.error("Error handling join-game event:", err);
     }
