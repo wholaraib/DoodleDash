@@ -1,3 +1,5 @@
+import 'package:doodledash/models/my_custom_painter.dart';
+import 'package:doodledash/models/touch_points.dart';
 import 'package:flutter/material.dart';
 import 'package:socket_io_client/socket_io_client.dart' as IO;
 import '../models/room_data.dart';
@@ -18,7 +20,8 @@ class PaintScreen extends StatefulWidget {
 
 class _PaintScreenState extends State<PaintScreen> {
   late IO.Socket _socket;
-  Map<String, dynamic>? dataOfRoom;
+  Map<String, dynamic>? roomState;
+  List<TouchPoints> points = [];
 
   @override
   void initState() {
@@ -42,7 +45,7 @@ class _PaintScreenState extends State<PaintScreen> {
         print("ROOM DATA RECEIVED");
         print(roomData);
         setState(() {
-          dataOfRoom = Map<String, dynamic>.from(roomData);
+          roomState = Map<String, dynamic>.from(roomData);
         });
         if (roomData['isJoin'] != true) {
           // start the timer
@@ -65,15 +68,44 @@ class _PaintScreenState extends State<PaintScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final width = MediaQuery.of(context).size.width;
+    final height = MediaQuery.of(context).size.height;
     return Scaffold(
-      appBar: AppBar(
-        leading: IconButton(
-          icon: const Icon(Icons.arrow_back_ios_new_rounded),
-          onPressed: () => Navigator.of(context).pop(),
-        ),
-      ),
-      body: Container(
-        
+      // appBar: AppBar(
+      //   leading: IconButton(
+      //     icon: const Icon(Icons.arrow_back_ios_new_rounded),
+      //     onPressed: () => Navigator.of(context).pop(),
+      //   ),
+      // ),
+      body: Stack(
+        children: [
+          Column(
+            crossAxisAlignment: CrossAxisAlignment.center,
+            mainAxisAlignment: MainAxisAlignment.start,
+            children: [
+              Container(
+                width: width,
+                height: height * 0.55,
+                child: GestureDetector(
+                  onPanUpdate: (details){},
+                  onPanStart: (details){},
+                  onPanEnd: (details){},
+                  child: SizedBox.expand(
+                    child: ClipRRect(
+                      borderRadius: BorderRadius.all(Radius.circular(20)),
+                      child: RepaintBoundary(
+                        child: CustomPaint(
+                          size: Size.infinite,
+                          painter: MyCustomPainter(points: points)
+                        )
+                      ),
+                    )
+                  )
+                ),
+              )
+            ],
+          )
+        ],
       ),
     );
   }
