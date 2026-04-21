@@ -87,7 +87,15 @@ class _PaintScreenState extends State<PaintScreen> {
                 width: width,
                 height: height * 0.55,
                 child: GestureDetector(
-                  onPanUpdate: (details){},
+                  onPanUpdate: (details){
+                    _socket.emit('paint', {
+                      'details': {
+                        'dx': details.localPosition.dx,
+                        'dy': details.localPosition.dy,
+                      },
+                      'roomName': widget.roomData.roomName,
+                    });
+                  },
                   onPanStart: (details){},
                   onPanEnd: (details){},
                   child: SizedBox.expand(

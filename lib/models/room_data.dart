@@ -1,4 +1,5 @@
 abstract class RoomData {
+  String get roomName;
   Map<String, dynamic> toMap();
 }
 
