@@ -29,6 +29,7 @@ mongoose
 io.on("connection", (socket) => {
   console.log("A user connected: " + socket.id);
 
+  // Create game event
   socket.on(
     "create-game",
     async ({ playerName, roomName, rounds, roomSize }) => {
@@ -62,6 +63,8 @@ io.on("connection", (socket) => {
     },
   );
 
+  // Join game event
+
   socket.on("join-game", async ({ playerName, roomName }) => {
     try {
       let room = await RoomModel.findOne({ roomName: roomName });
@@ -93,6 +96,13 @@ io.on("connection", (socket) => {
       console.error("Error handling join-game event:", err);
     }
   });
+
+  // Paint event - white board sockets
+  socket.on("paint", ({ details, roomName }) => {
+    io.to(roomName).emit("points", {details: details});
+  });
+
+
 
   socket.on("disconnect", () => {
     console.log("A user disconnected: " + socket.id);

@@ -22,6 +22,11 @@ class _PaintScreenState extends State<PaintScreen> {
   late IO.Socket _socket;
   Map<String, dynamic>? roomState;
   List<TouchPoints> points = [];
+  StrokeCap strokeType = StrokeCap.round;
+  Color selectedColor = Colors.black;
+  double strokeWidth = 2.0;
+  Opacity selectedOpacity = Opacity(opacity: 1.0);
+  // double opacity = 1;
 
   @override
   void initState() {
@@ -59,6 +64,28 @@ class _PaintScreenState extends State<PaintScreen> {
       }
     });
 
+    _socket.on('points', (point) {
+      print("POINTS RECEIVED");
+      print(point);
+      if (point['details'] != null) {
+        setState(() {
+          points.add(
+            TouchPoints(
+              points: Offset(
+                (point['details']['dx']).toDouble(),
+                (point['details']['dy']).toDouble(),
+              ),
+              paint: Paint()
+                ..strokeCap = strokeType
+                ..isAntiAlias = true
+                ..color = selectedColor.withAlpha((selectedOpacity.opacity * 255).toInt())
+                ..strokeWidth = strokeWidth,
+            ),
+          );
+        });
+      } 
+    });
+
     _socket.onDisconnect((_) {
       print('Disconnected from server');
     });
@@ -77,6 +104,7 @@ class _PaintScreenState extends State<PaintScreen> {
       //     onPressed: () => Navigator.of(context).pop(),
       //   ),
       // ),
+      backgroundColor: Colors.white,
       body: Stack(
         children: [
           Column(
@@ -87,7 +115,8 @@ class _PaintScreenState extends State<PaintScreen> {
                 width: width,
                 height: height * 0.55,
                 child: GestureDetector(
-                  onPanUpdate: (details){
+                  onPanUpdate: (details) {
+                    print(details.localPosition);
                     _socket.emit('paint', {
                       'details': {
                         'dx': details.localPosition.dx,
@@ -96,23 +125,38 @@ class _PaintScreenState extends State<PaintScreen> {
                       'roomName': widget.roomData.roomName,
                     });
                   },
-                  onPanStart: (details){},
-                  onPanEnd: (details){},
+                  onPanStart: (details) {
+                    print(details.localPosition);
+                    _socket.emit('paint', {
+                      'details': {
+                        'dx': details.localPosition.dx,
+                        'dy': details.localPosition.dy,
+                      },
+                      'roomName': widget.roomData.roomName,
+                    });
+                  },
+                  onPanEnd: (details) {
+                    print(details.localPosition);
+                    _socket.emit('paint', {
+                      'details': null,
+                      'roomName': widget.roomData.roomName,
+                    });
+                  },
                   child: SizedBox.expand(
                     child: ClipRRect(
                       borderRadius: BorderRadius.all(Radius.circular(20)),
                       child: RepaintBoundary(
                         child: CustomPaint(
                           size: Size.infinite,
-                          painter: MyCustomPainter(points: points)
-                        )
+                          painter: MyCustomPainter(points: points),
+                        ),
                       ),
-                    )
-                  )
+                    ),
+                  ),
                 ),
-              )
+              ),
             ],
-          )
+          ),
         ],
       ),
     );
