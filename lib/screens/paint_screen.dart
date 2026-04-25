@@ -1,6 +1,7 @@
 import 'package:doodledash/models/my_custom_painter.dart';
 import 'package:doodledash/models/touch_points.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_colorpicker/flutter_colorpicker.dart';
 import 'package:socket_io_client/socket_io_client.dart' as IO;
 import '../models/room_data.dart';
 
@@ -47,8 +48,6 @@ class _PaintScreenState extends State<PaintScreen> {
       print('Connected to socket server');
 
       _socket.on('room-updated', (roomData) {
-        print("ROOM DATA RECEIVED");
-        print(roomData);
         setState(() {
           roomState = Map<String, dynamic>.from(roomData);
         });
@@ -65,8 +64,6 @@ class _PaintScreenState extends State<PaintScreen> {
     });
 
     _socket.on('points', (point) {
-      print("POINTS RECEIVED");
-      print(point);
       if (point['details'] != null) {
         setState(() {
           points.add(
@@ -78,12 +75,33 @@ class _PaintScreenState extends State<PaintScreen> {
               paint: Paint()
                 ..strokeCap = strokeType
                 ..isAntiAlias = true
-                ..color = selectedColor.withAlpha((selectedOpacity.opacity * 255).toInt())
+                ..color = selectedColor.withAlpha(
+                  (selectedOpacity.opacity * 255).toInt(),
+                )
                 ..strokeWidth = strokeWidth,
             ),
           );
         });
-      } 
+      }
+    });
+
+    _socket.on('color-changed', (colorData) {
+      print("Color changed received: $colorData");
+      setState(() {
+        selectedColor = Color(int.parse(colorData['color'], radix: 16));
+      });
+    });
+
+    _socket.on('canvas-cleared', (_) {
+      setState(() {
+        points.clear();
+      });
+    });
+
+    _socket.on('stroke-width-changed', (data) {
+      setState(() {
+        strokeWidth = data['strokeWidth'].toDouble();
+      });
     });
 
     _socket.onDisconnect((_) {
@@ -97,13 +115,44 @@ class _PaintScreenState extends State<PaintScreen> {
   Widget build(BuildContext context) {
     final width = MediaQuery.of(context).size.width;
     final height = MediaQuery.of(context).size.height;
+
+    void selectColor() {
+      showDialog(
+        context: context,
+        builder: (context) => AlertDialog(
+          title: Text("Select Color"),
+          content: SingleChildScrollView(
+            child: BlockPicker(
+              pickerColor: selectedColor,
+              onColorChanged: (color) {
+                print("Selected color: $color");
+                String valueString = color.value.toRadixString(16);
+                print("color value string $valueString");
+                Map map = {
+                  'color': valueString,
+                  'roomName': widget.roomData.roomName,
+                };
+                _socket.emit('color-change', map);
+              },
+            ),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.of(context).pop(),
+              child: Text("Close", style: TextStyle(color: Color(0xFF1565C0))),
+            ),
+          ],
+        ),
+      );
+    }
+
     return Scaffold(
-      // appBar: AppBar(
-      //   leading: IconButton(
-      //     icon: const Icon(Icons.arrow_back_ios_new_rounded),
-      //     onPressed: () => Navigator.of(context).pop(),
-      //   ),
-      // ),
+      appBar: AppBar(
+        leading: IconButton(
+          icon: const Icon(Icons.arrow_back_ios_new_rounded),
+          onPressed: () => Navigator.of(context).pop(),
+        ),
+      ),
       backgroundColor: Colors.white,
       body: Stack(
         children: [
@@ -116,7 +165,6 @@ class _PaintScreenState extends State<PaintScreen> {
                 height: height * 0.55,
                 child: GestureDetector(
                   onPanUpdate: (details) {
-                    print(details.localPosition);
                     _socket.emit('paint', {
                       'details': {
                         'dx': details.localPosition.dx,
@@ -126,7 +174,6 @@ class _PaintScreenState extends State<PaintScreen> {
                     });
                   },
                   onPanStart: (details) {
-                    print(details.localPosition);
                     _socket.emit('paint', {
                       'details': {
                         'dx': details.localPosition.dx,
@@ -136,7 +183,6 @@ class _PaintScreenState extends State<PaintScreen> {
                     });
                   },
                   onPanEnd: (details) {
-                    print(details.localPosition);
                     _socket.emit('paint', {
                       'details': null,
                       'roomName': widget.roomData.roomName,
@@ -154,6 +200,45 @@ class _PaintScreenState extends State<PaintScreen> {
                     ),
                   ),
                 ),
+              ),
+              Row(
+                children: [
+                  IconButton(
+                    onPressed: () {
+                      selectColor();
+                    },
+                    icon: Icon(Icons.color_lens, color: selectedColor),
+                  ),
+                  Expanded(
+                    child: Slider(
+                      min: 1.0,
+                      max: 10.0,
+                      label: "Strokewidth $strokeWidth",
+                      activeColor: selectedColor,
+                      value: strokeWidth,
+                      onChanged: (double value) {
+                        setState(() {
+                          strokeWidth = value;
+                        });
+                        _socket.emit('stroke-width-change', {
+                          'strokeWidth': value,
+                          'roomName': widget.roomData.roomName,
+                        });
+                      },
+                    ),
+                  ),
+                  IconButton(
+                    onPressed: () {
+                      setState(() {
+                        points.clear();
+                      });
+                      _socket.emit('clear-canvas', {
+                        'roomName': widget.roomData.roomName,
+                      });
+                    },
+                    icon: Icon(Icons.layers_clear, color: selectedColor),
+                  ),
+                ],
               ),
             ],
           ),

@@ -99,10 +99,23 @@ io.on("connection", (socket) => {
 
   // Paint event - white board sockets
   socket.on("paint", ({ details, roomName }) => {
-    io.to(roomName).emit("points", {details: details});
+    io.to(roomName).emit("points", { details: details });
   });
 
+  // Color change socket
+  socket.on("color-change", ({ color, roomName }) => {
+    io.to(roomName).emit("color-changed", { color: color });
+  });
 
+  // Clear canvas socket
+  socket.on("clear-canvas", ({ roomName }) => {
+    io.to(roomName).emit("canvas-cleared");
+  });
+
+  // Stroke width change socket
+  socket.on("stroke-width-change", ({ strokeWidth, roomName }) => {
+    io.to(roomName).emit("stroke-width-changed", { strokeWidth: strokeWidth });
+  });
 
   socket.on("disconnect", () => {
     console.log("A user disconnected: " + socket.id);
