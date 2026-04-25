@@ -1,9 +1,10 @@
-import 'package:doodledash/models/my_custom_painter.dart';
 import 'package:doodledash/models/touch_points.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_colorpicker/flutter_colorpicker.dart';
 import 'package:socket_io_client/socket_io_client.dart' as IO;
 import '../models/room_data.dart';
+import '../widgets/paint_controls.dart';
+import '../widgets/paint_screen_control.dart';
 
 class PaintScreen extends StatefulWidget {
   const PaintScreen({
@@ -160,85 +161,38 @@ class _PaintScreenState extends State<PaintScreen> {
             crossAxisAlignment: CrossAxisAlignment.center,
             mainAxisAlignment: MainAxisAlignment.start,
             children: [
-              Container(
+              PaintScreenControl(
                 width: width,
-                height: height * 0.55,
-                child: GestureDetector(
-                  onPanUpdate: (details) {
-                    _socket.emit('paint', {
-                      'details': {
-                        'dx': details.localPosition.dx,
-                        'dy': details.localPosition.dy,
-                      },
-                      'roomName': widget.roomData.roomName,
-                    });
-                  },
-                  onPanStart: (details) {
-                    _socket.emit('paint', {
-                      'details': {
-                        'dx': details.localPosition.dx,
-                        'dy': details.localPosition.dy,
-                      },
-                      'roomName': widget.roomData.roomName,
-                    });
-                  },
-                  onPanEnd: (details) {
-                    _socket.emit('paint', {
-                      'details': null,
-                      'roomName': widget.roomData.roomName,
-                    });
-                  },
-                  child: SizedBox.expand(
-                    child: ClipRRect(
-                      borderRadius: BorderRadius.all(Radius.circular(20)),
-                      child: RepaintBoundary(
-                        child: CustomPaint(
-                          size: Size.infinite,
-                          painter: MyCustomPainter(points: points),
-                        ),
-                      ),
-                    ),
-                  ),
-                ),
+                height: height,
+                socket: _socket,
+                roomName: widget.roomData.roomName,
+                points: points,
+                strokeType: strokeType,
+                selectedColor: selectedColor,
+                strokeWidth: strokeWidth,
+                selectedOpacity: selectedOpacity.opacity,
               ),
-              Row(
-                children: [
-                  IconButton(
-                    onPressed: () {
-                      selectColor();
-                    },
-                    icon: Icon(Icons.color_lens, color: selectedColor),
-                  ),
-                  Expanded(
-                    child: Slider(
-                      min: 1.0,
-                      max: 10.0,
-                      label: "Strokewidth $strokeWidth",
-                      activeColor: selectedColor,
-                      value: strokeWidth,
-                      onChanged: (double value) {
-                        setState(() {
-                          strokeWidth = value;
-                        });
-                        _socket.emit('stroke-width-change', {
-                          'strokeWidth': value,
-                          'roomName': widget.roomData.roomName,
-                        });
-                      },
-                    ),
-                  ),
-                  IconButton(
-                    onPressed: () {
-                      setState(() {
-                        points.clear();
-                      });
-                      _socket.emit('clear-canvas', {
-                        'roomName': widget.roomData.roomName,
-                      });
-                    },
-                    icon: Icon(Icons.layers_clear, color: selectedColor),
-                  ),
-                ],
+              PaintControls(
+                selectedColor: selectedColor,
+                strokeWidth: strokeWidth,
+                onSelectColor: selectColor,
+                onStrokeWidthChanged: (double value) {
+                  setState(() {
+                    strokeWidth = value;
+                  });
+                  _socket.emit('stroke-width-change', {
+                    'strokeWidth': value,
+                    'roomName': widget.roomData.roomName,
+                  });
+                },
+                onClear: () {
+                  setState(() {
+                    points.clear();
+                  });
+                  _socket.emit('clear-canvas', {
+                    'roomName': widget.roomData.roomName,
+                  });
+                },
               ),
             ],
           ),
