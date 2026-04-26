@@ -1,4 +1,5 @@
 import 'package:doodledash/models/touch_points.dart';
+import 'package:doodledash/widgets/paint_chat.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_colorpicker/flutter_colorpicker.dart';
 import 'package:socket_io_client/socket_io_client.dart' as IO;
@@ -28,12 +29,22 @@ class _PaintScreenState extends State<PaintScreen> {
   Color selectedColor = Colors.black;
   double strokeWidth = 2.0;
   Opacity selectedOpacity = Opacity(opacity: 1.0);
+  List<Widget> textBlankWidget = [];
   // double opacity = 1;
 
   @override
   void initState() {
     super.initState();
     connect();
+  }
+
+  void renderTextBlank(String text) {
+    textBlankWidget.clear();
+    for (int i = 0; i < text.length; i++) {
+      textBlankWidget.add(
+        Center(child: const Text('_', style: TextStyle(fontSize: 30))),
+      );
+    }
   }
 
   static const String _serverUrl = 'http://localhost:3000';
@@ -50,6 +61,7 @@ class _PaintScreenState extends State<PaintScreen> {
 
       _socket.on('room-updated', (roomData) {
         setState(() {
+          renderTextBlank(roomData['word']);
           roomState = Map<String, dynamic>.from(roomData);
         });
         if (roomData['isJoin'] != true) {
@@ -193,6 +205,10 @@ class _PaintScreenState extends State<PaintScreen> {
                     'roomName': widget.roomData.roomName,
                   });
                 },
+              ),
+              PaintChat(
+                textBlankWidget: textBlankWidget,
+                onRenderTextBlank: renderTextBlank,
               ),
             ],
           ),
