@@ -30,7 +30,9 @@ class _PaintScreenState extends State<PaintScreen> {
   double strokeWidth = 2.0;
   Opacity selectedOpacity = Opacity(opacity: 1.0);
   List<Widget> textBlankWidget = [];
-  // double opacity = 1;
+  final ScrollController _scrollController = ScrollController();
+  final List<Map> messages = [];
+  final TextEditingController textController = TextEditingController();
 
   @override
   void initState() {
@@ -42,7 +44,10 @@ class _PaintScreenState extends State<PaintScreen> {
     textBlankWidget.clear();
     for (int i = 0; i < text.length; i++) {
       textBlankWidget.add(
-        Center(child: const Text('_', style: TextStyle(fontSize: 30))),
+        const Padding(
+          padding: EdgeInsets.symmetric(horizontal: 10.0),
+          child: Text('_', style: TextStyle(fontSize: 30)),
+        ),
       );
     }
   }
@@ -61,6 +66,7 @@ class _PaintScreenState extends State<PaintScreen> {
 
       _socket.on('room-updated', (roomData) {
         setState(() {
+          print(roomData['word']);
           renderTextBlank(roomData['word']);
           roomState = Map<String, dynamic>.from(roomData);
         });
@@ -99,7 +105,7 @@ class _PaintScreenState extends State<PaintScreen> {
     });
 
     _socket.on('color-changed', (colorData) {
-      print("Color changed received: $colorData");
+      print('Color changed received: $colorData');
       setState(() {
         selectedColor = Color(int.parse(colorData['color'], radix: 16));
       });
@@ -121,7 +127,7 @@ class _PaintScreenState extends State<PaintScreen> {
       print('Disconnected from server');
     });
 
-    _socket.connect(); // connect LAST, after listeners are registered
+    _socket.connect();
   }
 
   @override
@@ -133,15 +139,15 @@ class _PaintScreenState extends State<PaintScreen> {
       showDialog(
         context: context,
         builder: (context) => AlertDialog(
-          title: Text("Select Color"),
+          title: const Text('Select Color'),
           content: SingleChildScrollView(
             child: BlockPicker(
               pickerColor: selectedColor,
               onColorChanged: (color) {
-                print("Selected color: $color");
-                String valueString = color.value.toRadixString(16);
-                print("color value string $valueString");
-                Map map = {
+                print('Selected color: $color');
+                final String valueString = color.value.toRadixString(16);
+                print('color value string $valueString');
+                final Map<String, dynamic> map = {
                   'color': valueString,
                   'roomName': widget.roomData.roomName,
                 };
@@ -152,7 +158,10 @@ class _PaintScreenState extends State<PaintScreen> {
           actions: [
             TextButton(
               onPressed: () => Navigator.of(context).pop(),
-              child: Text("Close", style: TextStyle(color: Color(0xFF1565C0))),
+              child: const Text(
+                'Close',
+                style: TextStyle(color: Color(0xFF1565C0)),
+              ),
             ),
           ],
         ),
@@ -206,11 +215,84 @@ class _PaintScreenState extends State<PaintScreen> {
                   });
                 },
               ),
+              SingleChildScrollView(
+                scrollDirection: Axis.horizontal,
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: textBlankWidget,
+                ),
+              ),
               PaintChat(
-                textBlankWidget: textBlankWidget,
-                onRenderTextBlank: renderTextBlank,
+                scrollController: _scrollController,
+                messages: messages,
               ),
             ],
+          ),
+          Align(
+            alignment: Alignment.bottomCenter,
+            child: Container(
+              margin: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+              child: TextField(
+                controller: textController,
+                onSubmitted: (value) {
+                  final messageText = value.trim();
+                  if (messageText.isEmpty) return;
+                  final roomWord = roomState?['word']?.toString();
+                  final playerName =
+                      widget.roomData.toMap()['playerName']?.toString();
+
+                  final Map<String, dynamic> map = {
+                    'username': playerName,
+                    'message': messageText,
+                    'word': roomWord,
+                    'roomName': widget.roomData.roomName,
+                  };
+
+                  print('Emitting message: $map');
+                  _socket.emit('send-message', map);
+                  textController.clear();
+
+                  if (_scrollController.hasClients) {
+                    _scrollController.animateTo(
+                      _scrollController.position.maxScrollExtent + 60,
+                      duration: const Duration(milliseconds: 300),
+                      curve: Curves.easeOut,
+                    );
+                  }
+                },
+                autocorrect: false,
+                decoration: InputDecoration(
+                  hintText: 'Your guess',
+                  hintStyle: TextStyle(
+                    fontSize: 14,
+                    color: Colors.grey[400],
+                    fontWeight: FontWeight.w400,
+                  ),
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(24),
+                    borderSide: BorderSide.none,
+                  ),
+                  enabledBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(24),
+                    borderSide: BorderSide.none,
+                  ),
+                  focusedBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(24),
+                    borderSide: const BorderSide(
+                      color: Color(0xFF1565C0),
+                      width: 2,
+                    ),
+                  ),
+                  contentPadding: const EdgeInsets.symmetric(
+                    horizontal: 16,
+                    vertical: 16,
+                  ),
+                  filled: true,
+                  fillColor: Colors.grey[100],
+                ),
+                textInputAction: TextInputAction.done,
+              ),
+            ),
           ),
         ],
       ),
@@ -219,12 +301,14 @@ class _PaintScreenState extends State<PaintScreen> {
 
   @override
   void dispose() {
+    textController.dispose();
+    _scrollController.dispose();
     _socket.dispose();
     super.dispose();
   }
 }
 
 class ScreenType {
-  static const String create = "create";
-  static const String join = "join";
+  static const String create = 'create';
+  static const String join = 'join';
 }
