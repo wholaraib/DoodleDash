@@ -123,6 +123,27 @@ class _PaintScreenState extends State<PaintScreen> {
       });
     });
 
+    _socket.on('new-message', (messageData) {
+      setState(() {
+        messages.add(Map<String, dynamic>.from(messageData));
+      });
+      // Auto-scroll to bottom after new message
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (_scrollController.hasClients) {
+          // Add a small delay on web to ensure rendering is complete
+          Future.delayed(const Duration(milliseconds: 50), () {
+            if (_scrollController.hasClients) {
+              _scrollController.animateTo(
+                _scrollController.position.maxScrollExtent,
+                duration: const Duration(milliseconds: 300),
+                curve: Curves.easeOut,
+              );
+            }
+          });
+        }
+      });
+    });
+
     _socket.onDisconnect((_) {
       print('Disconnected from server');
     });
@@ -169,6 +190,7 @@ class _PaintScreenState extends State<PaintScreen> {
     }
 
     return Scaffold(
+      resizeToAvoidBottomInset: true,
       appBar: AppBar(
         leading: IconButton(
           icon: const Icon(Icons.arrow_back_ios_new_rounded),
@@ -176,13 +198,12 @@ class _PaintScreenState extends State<PaintScreen> {
         ),
       ),
       backgroundColor: Colors.white,
-      body: Stack(
-        children: [
-          Column(
-            crossAxisAlignment: CrossAxisAlignment.center,
-            mainAxisAlignment: MainAxisAlignment.start,
-            children: [
-              PaintScreenControl(
+      body: SafeArea(
+        child: Column(
+          children: [
+            Expanded(
+              flex: 6,
+              child: PaintScreenControl(
                 width: width,
                 height: height,
                 socket: _socket,
@@ -193,44 +214,44 @@ class _PaintScreenState extends State<PaintScreen> {
                 strokeWidth: strokeWidth,
                 selectedOpacity: selectedOpacity.opacity,
               ),
-              PaintControls(
-                selectedColor: selectedColor,
-                strokeWidth: strokeWidth,
-                onSelectColor: selectColor,
-                onStrokeWidthChanged: (double value) {
-                  setState(() {
-                    strokeWidth = value;
-                  });
-                  _socket.emit('stroke-width-change', {
-                    'strokeWidth': value,
-                    'roomName': widget.roomData.roomName,
-                  });
-                },
-                onClear: () {
-                  setState(() {
-                    points.clear();
-                  });
-                  _socket.emit('clear-canvas', {
-                    'roomName': widget.roomData.roomName,
-                  });
-                },
+            ),
+            PaintControls(
+              selectedColor: selectedColor,
+              strokeWidth: strokeWidth,
+              onSelectColor: selectColor,
+              onStrokeWidthChanged: (double value) {
+                setState(() {
+                  strokeWidth = value;
+                });
+                _socket.emit('stroke-width-change', {
+                  'strokeWidth': value,
+                  'roomName': widget.roomData.roomName,
+                });
+              },
+              onClear: () {
+                setState(() {
+                  points.clear();
+                });
+                _socket.emit('clear-canvas', {
+                  'roomName': widget.roomData.roomName,
+                });
+              },
+            ),
+            SingleChildScrollView(
+              scrollDirection: Axis.horizontal,
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: textBlankWidget,
               ),
-              SingleChildScrollView(
-                scrollDirection: Axis.horizontal,
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: textBlankWidget,
-                ),
-              ),
-              PaintChat(
+            ),
+            Expanded(
+              flex: 3,
+              child: PaintChat(
                 scrollController: _scrollController,
                 messages: messages,
               ),
-            ],
-          ),
-          Align(
-            alignment: Alignment.bottomCenter,
-            child: Container(
+            ),
+            Container(
               margin: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
               child: TextField(
                 controller: textController,
@@ -238,8 +259,9 @@ class _PaintScreenState extends State<PaintScreen> {
                   final messageText = value.trim();
                   if (messageText.isEmpty) return;
                   final roomWord = roomState?['word']?.toString();
-                  final playerName =
-                      widget.roomData.toMap()['playerName']?.toString();
+                  final playerName = widget.roomData
+                      .toMap()['playerName']
+                      ?.toString();
 
                   final Map<String, dynamic> map = {
                     'username': playerName,
@@ -247,8 +269,8 @@ class _PaintScreenState extends State<PaintScreen> {
                     'word': roomWord,
                     'roomName': widget.roomData.roomName,
                   };
-
                   print('Emitting message: $map');
+
                   _socket.emit('send-message', map);
                   textController.clear();
 
@@ -293,8 +315,8 @@ class _PaintScreenState extends State<PaintScreen> {
                 textInputAction: TextInputAction.done,
               ),
             ),
-          ),
-        ],
+          ],
+        ),
       ),
     );
   }

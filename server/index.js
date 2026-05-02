@@ -117,6 +117,15 @@ io.on("connection", (socket) => {
     io.to(roomName).emit("stroke-width-changed", { strokeWidth: strokeWidth });
   });
 
+  // chat message socket
+  socket.on("send-message", ({ message, username, roomName, word }) => {
+    io.to(roomName).emit("new-message", {
+      playerName: username,
+      message: message,
+      word: word,
+    });
+  });
+
   socket.on("disconnect", () => {
     console.log("A user disconnected: " + socket.id);
   });

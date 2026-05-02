@@ -12,30 +12,26 @@ class PaintChat extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      height: MediaQuery.of(context).size.height * 0.3,
-      child: ListView.builder(
-        controller: scrollController,
-        shrinkWrap: true,
-        itemCount: messages.length, // Replace with your actual message count
-        itemBuilder: (context, index) {
-          var message = messages[index].values;
-          return ListTile(
-            title: Text(
-              message.elementAt(0),
-              style: TextStyle(
-                color: Colors.black,
-                fontSize: 19,
-                fontWeight: FontWeight.bold,
-              ),
+    return ListView.builder(
+      controller: scrollController,
+      itemCount: messages.length,
+      itemBuilder: (context, index) {
+        var message = messages[index];
+        return ListTile(
+          title: Text(
+            message['playerName'] ?? 'Unknown',
+            style: const TextStyle(
+              color: Colors.black,
+              fontSize: 16,
+              fontWeight: FontWeight.bold,
             ),
-            subtitle: Text(
-              message.elementAt(1),
-              style: TextStyle(color: Colors.grey, fontSize: 16),
-            ),
-          );
-        },
-      ),
+          ),
+          subtitle: Text(
+            message['message'] ?? '',
+            style: const TextStyle(color: Colors.grey, fontSize: 14),
+          ),
+        );
+      },
     );
   }
 }

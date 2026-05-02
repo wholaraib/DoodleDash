@@ -29,9 +29,8 @@ class PaintScreenControl extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Container(
+    return SizedBox(
       width: width,
-      height: height * 0.55,
       child: GestureDetector(
         onPanUpdate: (details) {
           socket.emit('paint', {
@@ -56,7 +55,7 @@ class PaintScreenControl extends StatelessWidget {
         },
         child: SizedBox.expand(
           child: ClipRRect(
-            borderRadius: BorderRadius.all(Radius.circular(20)),
+            borderRadius: const BorderRadius.all(Radius.circular(20)),
             child: RepaintBoundary(
               child: CustomPaint(
                 size: Size.infinite,
