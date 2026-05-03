@@ -118,12 +118,39 @@ io.on("connection", (socket) => {
   });
 
   // chat message socket
-  socket.on("send-message", ({ message, username, roomName, word }) => {
-    io.to(roomName).emit("new-message", {
-      playerName: username,
-      message: message,
-      word: word,
-    });
+  socket.on(
+    "send-message",
+    ({ message, username, roomName, word, guessedUserCounter }) => {
+      io.to(roomName).emit("new-message", {
+        playerName: username,
+        message: message,
+        word: word,
+        guessedUserCounter: guessedUserCounter,
+      });
+    },
+  );
+
+  // change turn socket
+  socket.on("change-turn", async (roomName) => {
+    try {
+      let room = await RoomModel.findOne({ roomName: roomName });
+      let idx = room.turnIndex;
+      if (idx + 1 === room.players.length) {
+        room.currentRound += 1;
+      }
+      if (room.currentRound <= room.rounds) {
+        const word = getRandomWord();
+        room.word = word;
+        room.turnIndex = (idx + 1) % room.players.length;
+        room.turn = room.players[room.turnIndex];
+        room = await room.save();
+        io.to(roomName).emit("change-turn", room);
+      } else {
+        io.to(roomName).emit("show-leaderboard", room.players);
+      }
+    } catch (err) {
+      console.log(err);
+    }
   });
 
   socket.on("disconnect", () => {

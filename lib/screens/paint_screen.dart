@@ -34,6 +34,8 @@ class _PaintScreenState extends State<PaintScreen> {
   final List<Map> messages = [];
   final TextEditingController textController = TextEditingController();
 
+  int guessedUserCounter = 0;
+
   @override
   void initState() {
     super.initState();
@@ -126,7 +128,11 @@ class _PaintScreenState extends State<PaintScreen> {
     _socket.on('new-message', (messageData) {
       setState(() {
         messages.add(Map<String, dynamic>.from(messageData));
+        guessedUserCounter = messageData['guessedUserCounter'];
       });
+      if (guessedUserCounter == roomState?['players']?.length - 1) {
+        _socket.emit('change-turn', {'roomName': widget.roomData.roomName});
+      }
       // Auto-scroll to bottom after new message
       WidgetsBinding.instance.addPostFrameCallback((_) {
         if (_scrollController.hasClients) {
@@ -136,12 +142,31 @@ class _PaintScreenState extends State<PaintScreen> {
               _scrollController.animateTo(
                 _scrollController.position.maxScrollExtent,
                 duration: const Duration(milliseconds: 300),
-                curve: Curves.easeOut,
+                curve: Curves.easeInOut,
               );
             }
           });
         }
       });
+    });
+
+    _socket.on("change-turn", (roomData) {
+      String oldWord = roomState?['word'];
+      showDialog(
+        context: context,
+        builder: (context) {
+          Future.delayed(const Duration(seconds: 3), () {
+            setState(() {
+              roomState = Map<String, dynamic>.from(roomData);
+              renderTextBlank(roomState?['word']);
+              guessedUserCounter = 0;
+              points.clear();
+            });
+            Navigator.of(context).pop();
+          });
+          return AlertDialog(title: Center(child: Text('Word was $oldWord')));
+        },
+      );
     });
 
     _socket.onDisconnect((_) {
@@ -268,8 +293,8 @@ class _PaintScreenState extends State<PaintScreen> {
                     'message': messageText,
                     'word': roomWord,
                     'roomName': widget.roomData.roomName,
+                    'guessedUserCounter': guessedUserCounter,
                   };
-                  print('Emitting message: $map');
 
                   _socket.emit('send-message', map);
                   textController.clear();
