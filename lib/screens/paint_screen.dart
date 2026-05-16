@@ -343,6 +343,16 @@ class _PaintScreenState extends State<PaintScreen> {
           ],
         ),
       ),
+      floatingActionButton: FloatingActionButton(
+        onPressed: () {
+          setState(() {
+            points.clear();
+          });
+          _socket.emit('clear-canvas', {'roomName': widget.roomData.roomName});
+        },
+        backgroundColor: const Color(0xFF1565C0),
+        child: const Icon(Icons.layers_clear_rounded, color: Colors.white),
+      ),
     );
   }
 

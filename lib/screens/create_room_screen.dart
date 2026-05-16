@@ -97,66 +97,68 @@ class _CreateRoomScreenState extends State<CreateRoomScreen> {
       body: SafeArea(
         child: Padding(
           padding: const EdgeInsets.symmetric(horizontal: 24),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              const SizedBox(height: 8),
-              const Text(
-                'Create a Room',
-                style: TextStyle(
-                  fontSize: 28,
-                  fontWeight: FontWeight.bold,
-                  color: Color(0xFF1565C0),
-                ),
-              ),
-              const SizedBox(height: 8),
-              Text(
-                'Set up your room and invite friends to play.',
-                style: TextStyle(fontSize: 15, color: Colors.grey[600]),
-              ),
-              const SizedBox(height: 40),
-              CustomTextField(label: 'Your name', controller: _nameController),
-              const SizedBox(height: 16),
-              CustomTextField(
-                label: 'Room name',
-                controller: _roomNameController,
-              ),
-              const SizedBox(height: 16),
-              _buildDropdown(
-                label: 'Number of rounds',
-                value: _selectedRounds,
-                items: ["2", "3", "5", "10", "15"],
-                onChanged: (value) => setState(() => _selectedRounds = value!),
-              ),
-              const SizedBox(height: 16),
-              _buildDropdown(
-                label: 'Room size',
-                value: _selectedRoomSize,
-                items: ["2", "3", "4", "5", "6", "7", "8"],
-                onChanged: (value) =>
-                    setState(() => _selectedRoomSize = value!),
-              ),
-              const SizedBox(height: 32),
-              SizedBox(
-                width: double.infinity,
-                height: 52,
-                child: ElevatedButton(
-                  onPressed: createRoom,
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: const Color(0xFF1565C0),
-                    foregroundColor: Colors.white,
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                    textStyle: const TextStyle(
-                      fontSize: 16,
-                      fontWeight: FontWeight.w600,
-                    ),
+          child: SingleChildScrollView(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                const SizedBox(height: 8),
+                const Text(
+                  'Create a Room',
+                  style: TextStyle(
+                    fontSize: 28,
+                    fontWeight: FontWeight.bold,
+                    color: Color(0xFF1565C0),
                   ),
-                  child: const Text('Create Room'),
                 ),
-              ),
-            ],
+                const SizedBox(height: 8),
+                Text(
+                  'Set up your room and invite friends to play.',
+                  style: TextStyle(fontSize: 15, color: Colors.grey[600]),
+                ),
+                const SizedBox(height: 40),
+                CustomTextField(label: 'Your name', controller: _nameController),
+                const SizedBox(height: 16),
+                CustomTextField(
+                  label: 'Room name',
+                  controller: _roomNameController,
+                ),
+                const SizedBox(height: 16),
+                _buildDropdown(
+                  label: 'Number of rounds',
+                  value: _selectedRounds,
+                  items: ["2", "3", "5", "10", "15"],
+                  onChanged: (value) => setState(() => _selectedRounds = value!),
+                ),
+                const SizedBox(height: 16),
+                _buildDropdown(
+                  label: 'Room size',
+                  value: _selectedRoomSize,
+                  items: ["2", "3", "4", "5", "6", "7", "8"],
+                  onChanged: (value) =>
+                      setState(() => _selectedRoomSize = value!),
+                ),
+                const SizedBox(height: 32),
+                SizedBox(
+                  width: double.infinity,
+                  height: 52,
+                  child: ElevatedButton(
+                    onPressed: createRoom,
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: const Color(0xFF1565C0),
+                      foregroundColor: Colors.white,
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                      textStyle: const TextStyle(
+                        fontSize: 16,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                    child: const Text('Create Room'),
+                  ),
+                ),
+              ],
+            ),
           ),
         ),
       ),
