@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:doodledash/models/touch_points.dart';
 import 'package:doodledash/widgets/paint_chat.dart';
 import 'package:flutter/material.dart';
@@ -33,8 +35,9 @@ class _PaintScreenState extends State<PaintScreen> {
   final ScrollController _scrollController = ScrollController();
   final List<Map> messages = [];
   final TextEditingController textController = TextEditingController();
-
   int guessedUserCounter = 0;
+  int _start = 60;
+  late Timer _timer;
 
   @override
   void initState() {
@@ -52,6 +55,22 @@ class _PaintScreenState extends State<PaintScreen> {
         ),
       );
     }
+  }
+
+  void startTimer() {
+    const oneSec = const Duration(seconds: 1);
+    _timer = Timer.periodic(oneSec, (Timer time) {
+      if (_start == 0) {
+        _socket.emit('change-turn', {'roomName': widget.roomData.roomName});
+        setState(() {
+          time.cancel();
+        });
+      } else {
+        setState(() {
+          _start--;
+        });
+      }
+    });
   }
 
   static const String _serverUrl = 'http://localhost:3000';
@@ -73,7 +92,7 @@ class _PaintScreenState extends State<PaintScreen> {
           roomState = Map<String, dynamic>.from(roomData);
         });
         if (roomData['isJoin'] != true) {
-          // start the timer
+          startTimer();
         }
       });
 
@@ -161,8 +180,11 @@ class _PaintScreenState extends State<PaintScreen> {
               renderTextBlank(roomState?['word']);
               guessedUserCounter = 0;
               points.clear();
+              _start = 60;
             });
             Navigator.of(context).pop();
+            _timer.cancel();
+            startTimer();
           });
           return AlertDialog(title: Center(child: Text('Word was $oldWord')));
         },
@@ -180,6 +202,11 @@ class _PaintScreenState extends State<PaintScreen> {
   Widget build(BuildContext context) {
     final width = MediaQuery.of(context).size.width;
     final height = MediaQuery.of(context).size.height;
+
+    // Determine if it's the user's turn to draw
+    final playerName = widget.roomData.toMap()['playerName'];
+    final isDrawingPlayer =
+        roomState != null && roomState?['turn']?['name'] == playerName;
 
     void selectColor() {
       showDialog(
@@ -276,82 +303,98 @@ class _PaintScreenState extends State<PaintScreen> {
                 messages: messages,
               ),
             ),
-            Container(
-              margin: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
-              child: TextField(
-                controller: textController,
-                onSubmitted: (value) {
-                  final messageText = value.trim();
-                  if (messageText.isEmpty) return;
-                  final roomWord = roomState?['word']?.toString();
-                  final playerName = widget.roomData
-                      .toMap()['playerName']
-                      ?.toString();
-
-                  final Map<String, dynamic> map = {
-                    'username': playerName,
-                    'message': messageText,
-                    'word': roomWord,
-                    'roomName': widget.roomData.roomName,
-                    'guessedUserCounter': guessedUserCounter,
-                  };
-
-                  _socket.emit('send-message', map);
-                  textController.clear();
-
-                  if (_scrollController.hasClients) {
-                    _scrollController.animateTo(
-                      _scrollController.position.maxScrollExtent + 60,
-                      duration: const Duration(milliseconds: 300),
-                      curve: Curves.easeOut,
-                    );
-                  }
-                },
-                autocorrect: false,
-                decoration: InputDecoration(
-                  hintText: 'Your guess',
-                  hintStyle: TextStyle(
-                    fontSize: 14,
-                    color: Colors.grey[400],
-                    fontWeight: FontWeight.w400,
-                  ),
-                  border: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(24),
-                    borderSide: BorderSide.none,
-                  ),
-                  enabledBorder: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(24),
-                    borderSide: BorderSide.none,
-                  ),
-                  focusedBorder: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(24),
-                    borderSide: const BorderSide(
-                      color: Color(0xFF1565C0),
-                      width: 2,
-                    ),
-                  ),
-                  contentPadding: const EdgeInsets.symmetric(
-                    horizontal: 16,
-                    vertical: 16,
-                  ),
-                  filled: true,
-                  fillColor: Colors.grey[100],
+            if (!isDrawingPlayer)
+              Container(
+                margin: const EdgeInsets.symmetric(
+                  horizontal: 20,
+                  vertical: 12,
                 ),
-                textInputAction: TextInputAction.done,
+                child: TextField(
+                  controller: textController,
+                  onSubmitted: (value) {
+                    final messageText = value.trim();
+                    if (messageText.isEmpty) return;
+                    final roomWord = roomState?['word']?.toString();
+
+                    final Map<String, dynamic> map = {
+                      'username': playerName,
+                      'message': messageText,
+                      'word': roomWord,
+                      'roomName': widget.roomData.roomName,
+                      'guessedUserCounter': guessedUserCounter,
+                      'totalTime': 60,
+                      'timeTaken': 60 - _start,
+                    };
+
+                    _socket.emit('send-message', map);
+                    textController.clear();
+
+                    if (_scrollController.hasClients) {
+                      _scrollController.animateTo(
+                        _scrollController.position.maxScrollExtent + 60,
+                        duration: const Duration(milliseconds: 300),
+                        curve: Curves.easeOut,
+                      );
+                    }
+                  },
+                  autocorrect: false,
+                  decoration: InputDecoration(
+                    hintText: 'Your guess',
+                    hintStyle: TextStyle(
+                      fontSize: 14,
+                      color: Colors.grey[400],
+                      fontWeight: FontWeight.w400,
+                    ),
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(24),
+                      borderSide: BorderSide.none,
+                    ),
+                    enabledBorder: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(24),
+                      borderSide: BorderSide.none,
+                    ),
+                    focusedBorder: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(24),
+                      borderSide: const BorderSide(
+                        color: Color(0xFF1565C0),
+                        width: 2,
+                      ),
+                    ),
+                    contentPadding: const EdgeInsets.symmetric(
+                      horizontal: 16,
+                      vertical: 16,
+                    ),
+                    filled: true,
+                    fillColor: Colors.grey[100],
+                  ),
+                  textInputAction: TextInputAction.done,
+                ),
+              )
+            else
+              Container(
+                margin: const EdgeInsets.symmetric(
+                  horizontal: 20,
+                  vertical: 12,
+                ),
+                child: Text(
+                  "You are drawing! Wait for others to guess.",
+                  style: TextStyle(color: Colors.grey[600]),
+                ),
               ),
-            ),
           ],
         ),
       ),
-      floatingActionButton: FloatingActionButton(
-        onPressed: () {
-          setState(() {
-            points.clear();
-          });
-          _socket.emit('clear-canvas', {'roomName': widget.roomData.roomName});
-        },
-        backgroundColor: const Color(0xFF1565C0),
-        child: const Icon(Icons.layers_clear_rounded, color: Colors.white),
+      floatingActionButton: Container(
+        margin: const EdgeInsets.only(bottom: 60),
+        child: FloatingActionButton(
+          onPressed: () {},
+          elevation: 7,
+          backgroundColor: Colors.white,
+          child: Text(
+            '$_start',
+            style: TextStyle(color: Colors.black, fontSize: 22),
+          ),
+        ),
       ),
     );
   }

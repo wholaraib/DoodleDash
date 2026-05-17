@@ -120,18 +120,58 @@ io.on("connection", (socket) => {
   // chat message socket
   socket.on(
     "send-message",
-    ({ message, username, roomName, word, guessedUserCounter }) => {
-      io.to(roomName).emit("new-message", {
-        playerName: username,
-        message: message,
-        word: word,
-        guessedUserCounter: guessedUserCounter,
-      });
+    async ({
+      message,
+      username,
+      roomName,
+      word,
+      guessedUserCounter,
+      timeTaken,
+    }) => {
+      if (message.toLowerCase() === word.toLowerCase()) {
+        let room = await RoomModel.findOne({ roomName: roomName });
+        if (!room) return;
+        let player = room.players.filter(
+          (player) => player.name === username,
+        )[0];
+        if (timeTaken > 0) {
+          // Max score for instant guess, min score for slowest guess
+          const MAX_SCORE = 100;
+          const MIN_SCORE = 10;
+          const TOTAL_TIME = 60; // seconds
+
+          // Ensure timeTaken is within bounds
+          let safeTime = Math.max(1, Math.min(timeTaken, TOTAL_TIME));
+          // Linear scaling: faster = higher score
+          let score = Math.round(
+            MIN_SCORE + ((TOTAL_TIME - safeTime) / TOTAL_TIME) * (MAX_SCORE - MIN_SCORE)
+          );
+          player.score += score;
+        }
+        room = await room.save();
+        io.to(roomName).emit("new-message", {
+          playerName: username,
+          message:
+            username +
+            ' has guessed the word correctly! The word was "' +
+            word +
+            '"',
+          word: word,
+          guessedUserCounter: guessedUserCounter + 1,
+        });
+      } else {
+        io.to(roomName).emit("new-message", {
+          playerName: username,
+          message: message,
+          word: word,
+          guessedUserCounter: guessedUserCounter,
+        });
+      }
     },
   );
 
   // change turn socket
-  socket.on("change-turn", async (roomName) => {
+  socket.on("change-turn", async ({ roomName }) => {
     try {
       let room = await RoomModel.findOne({ roomName: roomName });
       let idx = room.turnIndex;
