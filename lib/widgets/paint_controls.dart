@@ -6,6 +6,7 @@ class PaintControls extends StatelessWidget {
   final VoidCallback onSelectColor;
   final ValueChanged<double> onStrokeWidthChanged;
   final VoidCallback onClear;
+  final bool canDraw;
 
   const PaintControls({
     Key? key,
@@ -14,6 +15,7 @@ class PaintControls extends StatelessWidget {
     required this.onSelectColor,
     required this.onStrokeWidthChanged,
     required this.onClear,
+    required this.canDraw,
   }) : super(key: key);
 
   @override
@@ -21,8 +23,8 @@ class PaintControls extends StatelessWidget {
     return Row(
       children: [
         IconButton(
-          onPressed: onSelectColor,
-          icon: Icon(Icons.color_lens, color: selectedColor),
+          onPressed: canDraw ? onSelectColor : null,
+          icon: Icon(Icons.color_lens, color: canDraw ? selectedColor : Colors.grey),
         ),
         Expanded(
           child: Slider(
@@ -31,12 +33,12 @@ class PaintControls extends StatelessWidget {
             label: "Strokewidth $strokeWidth",
             activeColor: selectedColor,
             value: strokeWidth,
-            onChanged: onStrokeWidthChanged,
+            onChanged: canDraw ? onStrokeWidthChanged : null,
           ),
         ),
         IconButton(
-          onPressed: onClear,
-          icon: Icon(Icons.layers_clear, color: selectedColor),
+          onPressed: canDraw ? onClear : null,
+          icon: Icon(Icons.layers_clear, color: canDraw ? selectedColor : Colors.grey),
         ),
       ],
     );

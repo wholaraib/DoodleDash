@@ -8,11 +8,12 @@ class PaintScreenControl extends StatelessWidget {
   final double height;
   final IO.Socket socket;
   final String roomName;
-  final List<TouchPoints> points;
+  final List<TouchPoints?> points;
   final StrokeCap strokeType;
   final Color selectedColor;
   final double strokeWidth;
   final double selectedOpacity;
+  final bool canDraw;
 
   const PaintScreenControl({
     Key? key,
@@ -25,6 +26,7 @@ class PaintScreenControl extends StatelessWidget {
     required this.selectedColor,
     required this.strokeWidth,
     required this.selectedOpacity,
+    required this.canDraw,
   }) : super(key: key);
 
   @override
@@ -32,27 +34,33 @@ class PaintScreenControl extends StatelessWidget {
     return SizedBox(
       width: width,
       child: GestureDetector(
-        onPanUpdate: (details) {
-          socket.emit('paint', {
-            'details': {
-              'dx': details.localPosition.dx,
-              'dy': details.localPosition.dy,
-            },
-            'roomName': roomName,
-          });
-        },
-        onPanStart: (details) {
-          socket.emit('paint', {
-            'details': {
-              'dx': details.localPosition.dx,
-              'dy': details.localPosition.dy,
-            },
-            'roomName': roomName,
-          });
-        },
-        onPanEnd: (details) {
-          socket.emit('paint', {'details': null, 'roomName': roomName});
-        },
+        onPanUpdate: canDraw
+            ? (details) {
+                socket.emit('paint', {
+                  'details': {
+                    'dx': details.localPosition.dx,
+                    'dy': details.localPosition.dy,
+                  },
+                  'roomName': roomName,
+                });
+              }
+            : null,
+        onPanStart: canDraw
+            ? (details) {
+                socket.emit('paint', {
+                  'details': {
+                    'dx': details.localPosition.dx,
+                    'dy': details.localPosition.dy,
+                  },
+                  'roomName': roomName,
+                });
+              }
+            : null,
+        onPanEnd: canDraw
+            ? (details) {
+                socket.emit('paint', {'details': null, 'roomName': roomName});
+              }
+            : null,
         child: SizedBox.expand(
           child: ClipRRect(
             borderRadius: const BorderRadius.all(Radius.circular(20)),
