@@ -22,7 +22,7 @@ Players can create private rooms, invite friends using a room code, draw secret 
 
 # 📱 Screenshots
 
-<img width="1206" height="2622" alt="Simulator Screenshot - iPhone 17 - 2026-05-17 at 22 53 40" src="https://github.com/user-attachments/assets/e65e02fe-ca0e-4b1a-8670-9fa19e0064ea" />
+<img width="300" height="600" alt="Simulator Screenshot - iPhone 17 - 2026-05-17 at 22 53 40" src="https://github.com/user-attachments/assets/e65e02fe-ca0e-4b1a-8670-9fa19e0064ea" />
 
 
 ---
