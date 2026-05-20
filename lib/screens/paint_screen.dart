@@ -11,6 +11,7 @@ import '../models/room_data.dart';
 import '../widgets/paint_controls.dart';
 import '../widgets/paint_screen_control.dart';
 import '../widgets/leaderboard.dart';
+import 'doodle_champions_screen.dart';
 
 class PaintScreen extends StatefulWidget {
   const PaintScreen({
@@ -27,6 +28,7 @@ class PaintScreen extends StatefulWidget {
 }
 
 class _PaintScreenState extends State<PaintScreen> {
+  // ...existing code...
   late IO.Socket _socket;
   Map<String, dynamic>? roomState;
   List<TouchPoints?> points = [];
@@ -108,6 +110,17 @@ class _PaintScreenState extends State<PaintScreen> {
     _socket = IO.io(_serverUrl, <String, dynamic>{
       'transports': ['websocket'],
       'autoConnect': false,
+    });
+
+    // Listen for final leaderboard event
+    _socket.on('show-leaderboard', (players) {
+      List<Map<String, dynamic>> sortedPlayers = List<Map<String, dynamic>>.from(players)
+        ..sort((a, b) => (b['score'] as int).compareTo(a['score'] as int));
+      Navigator.of(context).pushReplacement(
+        MaterialPageRoute(
+          builder: (context) => DoodleChampionsScreen(players: sortedPlayers),
+        ),
+      );
     });
 
     _socket.onConnect((_) {
